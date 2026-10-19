@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title data-i18n="title">TransitOne Surat - AI Powered Transit System</title>
+  
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="styles.css">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Leaflet Map CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  
+  <!-- Global Error Handler for Debugging -->
+  <script>
+    window.onerror = function(msg, url, lineNo, columnNo, error) {
+      alert("JS Error: " + msg + "\nFile: " + url + "\nLine: " + lineNo);
+      return false;
+    };
+  </script>
+</head>
+<body>
+
+  <!-- Loading Animation -->
+  <div id="loading-overlay">
+    <div class="spinner"></div>
+    <div class="loading-logo" data-i18n="title">TransitOne Surat</div>
+  </div>
+
+  <!-- Scroll Progress Bar -->
+  <div id="scroll-progress"></div>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <a href="#home" class="nav-brand">
+      <i class="fas fa-bus"></i>
+      <span class="brand-text" data-i18n="title">TransitOne Surat</span>
+    </a>
+    
+    <button class="hamburger" id="hamburger" aria-label="Menu">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+    
+    <div class="nav-links-container" id="nav-links-container">
+      <ul class="nav-links">
+        <li><a href="#home" class="nav-link active" data-i18n="home"><i class="fas fa-house"></i> Home</a></li>
+        <li><a href="#routes" class="nav-link" data-i18n="routes"><i class="fas fa-route"></i> Routes</a></li>
+        <li><a href="#tracking" class="nav-link" data-i18n="tracking"><i class="fas fa-location-crosshairs"></i> Live Tracking</a></li>
+        <li><a href="#stations" class="nav-link" data-i18n="stations"><i class="fas fa-warehouse"></i> Bus Stations</a></li>
+        <li><a href="#nearby" class="nav-link" data-i18n="nearby"><i class="fas fa-street-view"></i> Nearby</a></li>
+        <li><a href="#timetable" class="nav-link" data-i18n="timetable"><i class="fas fa-calendar-alt"></i> Timetable</a></li>
+        <li><a href="#ticket" class="nav-link" data-i18n="ticket"><i class="fas fa-ticket-alt"></i> Ticket</a></li>
+        <li><a href="#alerts" class="nav-link" data-i18n="alerts"><i class="fas fa-bell"></i> Alerts</a></li>
+        <li><a href="#feedback" class="nav-link" data-i18n="feedback"><i class="fas fa-comment-dots"></i> Feedback</a></li>
+        <li><a href="#about" class="nav-link" data-i18n="about"><i class="fas fa-info-circle"></i> About</a></li>
+        <li><a href="#contact" class="nav-link" data-i18n="contact"><i class="fas fa-envelope"></i> Contact</a></li>
+        <li><a href="#admin" class="nav-link" data-i18n="dashboard"><i class="fas fa-user-shield"></i> Admin</a></li>
+      </ul>
+      
+      <div class="nav-actions">
+        <select id="lang-select" class="lang-select">
+          <option value="en">English</option>
+          <option value="hn">हिन्दी (Hindi)</option>
+          <option value="gu">ગુજરાતી (Gujarati)</option>
+        </select>
+        <button id="theme-toggle" class="theme-toggle">
+          <i class="fas fa-moon"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Auth button lives OUTSIDE the hamburger menu so it is always visible -->
+    <div id="auth-nav-container" class="auth-nav-container">
+      <button id="nav-signin-btn" class="btn btn-primary" style="padding: 6px 16px; font-size: 13px;" onclick="openAuthModal()"><i class="fas fa-user-circle"></i> <span class="signin-text">Sign In</span></button>
+    </div>
+  </nav>
+
+  <!-- Main View Router Container -->
+  <main>
+
+    <!-- SECTION: HOME -->
+    <section id="home" class="page-section active">
+      <div class="hero-wrapper">
+        <div class="hero-bg"></div>
+        <div class="hero-content">
+          <div class="hero-badge">
+            <i class="fas fa-shield-halved"></i>
+            <span data-i18n="operational_status">Today's Status: All systems normal</span>
+          </div>
+          <h1 class="hero-title">Smart Surat <br><span>BRTS Portal</span></h1>
+          <p class="hero-subtitle" data-i18n="subtitle">Fast, Smart, Safe and Sustainable Public Transportation for Surat City</p>
+          <div class="hero-buttons">
+            <a href="#routes" class="btn btn-primary"><i class="fas fa-search"></i> <span data-i18n="find_bus">Find Bus</span></a>
+            <a href="#tracking" class="btn btn-secondary"><i class="fas fa-location-arrow"></i> <span data-i18n="tracking">Live Tracking</span></a>
+            <a href="#journey_planner" class="btn btn-outline"><i class="fas fa-map-marked-alt"></i> <span data-i18n="plan_journey">Plan Journey</span></a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Widgets & Statistics Row -->
+      <div class="status-weather-bar">
+        <!-- Live Status Widget -->
+        <div class="status-widget">
+          <div class="widget-header">
+            <h3 data-i18n="operational_status"><i class="fas fa-circle-nodes"></i> Operational Summary</h3>
+            <span class="status-indicator running">ONLINE</span>
+          </div>
+          <div class="status-grid">
+            <div class="status-item">
+              <i class="fas fa-bus-simple"></i>
+              <div class="status-item-info">
+                <span>Active Fleet</span>
+                <strong>124 Buses</strong>
+              </div>
+            </div>
+            <div class="status-item">
+              <i class="fas fa-road"></i>
+              <div class="status-item-info">
+                <span>Active Corridors</span>
+                <strong>4 Main Links</strong>
+              </div>
+            </div>
+            <div class="status-item">
+              <i class="fas fa-chart-line"></i>
+              <div class="status-item-info">
+                <span>On-Time Rate</span>
+                <strong>96.8%</strong>
+              </div>
+            </div>
+            <div class="status-item">
+              <i class="fas fa-tree"></i>
+              <div class="status-item-info">
+                <span>CO2 Offset Today</span>
+                <strong>4.8 Tons</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Weather Widget -->
+        <div class="weather-widget">
+          <div class="widget-header">
+            <h3 data-i18n="weather_widget"><i class="fas fa-cloud-sun"></i> Surat Local Weather</h3>
+          </div>
+          <div class="weather-content">
+            <div class="weather-main">
+              <i class="fas fa-cloud-sun-rain"></i>
+              <div class="weather-temp">
+                <h4 id="weather-temp-val">31°C</h4>
+                <p id="weather-condition">Humid & Cloudy</p>
+              </div>
+            </div>
+            <div class="weather-details" id="weather-details-txt">
+              <span>AQI: <strong>48 (Excellent)</strong></span><br>
+              <span>Humidity: <strong>78%</strong></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tool Cards Grid -->
+      <div class="quick-tools-grid">
+        <a href="#routes" class="tool-card">
+          <div class="tool-icon"><i class="fas fa-compass"></i></div>
+          <div class="tool-info">
+            <h3 data-i18n="routes">Bus Routes</h3>
+            <p>Search schedules, station lists, routes coordinates and maps.</p>
+          </div>
+        </a>
+        <a href="#ticket" class="tool-card">
+          <div class="tool-icon"><i class="fas fa-ticket"></i></div>
+          <div class="tool-info">
+            <h3 data-i18n="ticket">Smart Ticket</h3>
+            <p>Book journey tickets online and generate digital QR Codes.</p>
+          </div>
+        </a>
+
+        <a href="#journey_planner" class="tool-card">
+          <div class="tool-icon"><i class="fas fa-brain"></i></div>
+          <div class="tool-info">
+            <h3 data-i18n="journey_planner">AI Journey Planner</h3>
+            <p>Get intelligent path recommendations with predicted delays and crowd levels.</p>
+          </div>
+        </a>
+        <a href="#nearby" class="tool-card">
+          <div class="tool-icon"><i class="fas fa-street-view"></i></div>
+          <div class="tool-info">
+            <h3 data-i18n="nearby">Nearby Stations</h3>
+            <p>Find BRTS platforms closest to your geographical location.</p>
+          </div>
+        </a>
+        <a href="#feedback" class="tool-card">
+          <div class="tool-icon"><i class="fas fa-circle-question"></i></div>
+          <div class="tool-info">
+            <h3 data-i18n="feedback">Feedback Tracker</h3>
+            <p>Submit journey surveys, report delay, and track complaints.</p>
+          </div>
+        </a>
+      </div>
+
+      <!-- Statistics Counters Section -->
+      <div class="section-header">
+        <h2 data-i18n="operational_status">Surat BRTS at a Glance</h2>
+        <p>Operational data and environmental performance details updated live.</p>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fas fa-bus"></i></div>
+          <div class="stat-number counter-value" data-target="150" data-suffix="+">0</div>
+          <div class="stat-label" data-i18n="buses_running">Smart Buses Running</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fas fa-map-pin"></i></div>
+          <div class="stat-number counter-value" data-target="64" data-suffix="">0</div>
+          <div class="stat-label" data-i18n="brts_stations">BRTS Stations</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fas fa-users"></i></div>
+          <div class="stat-number counter-value" data-target="145000" data-suffix="+">0</div>
+          <div class="stat-label" data-i18n="daily_passengers">Daily Passengers</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fas fa-leaf"></i></div>
+          <div class="stat-number counter-value" data-target="530" data-suffix=" Tons">0</div>
+          <div class="stat-label" data-i18n="carbon_saved">Carbon Emissions Saved</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: PASSENGER DASHBOARD -->
+    <section id="passenger_dashboard" class="page-section">
+      <div class="section-header">
+        <h2>Passenger Dashboard</h2>
+        <p>Manage your transit card, digital tickets, and travel history.</p>
+      </div>
+
+      <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:30px; margin-bottom: 30px;">
+        <!-- RFID Digital Pass Card -->
+        <div class="glass-panel" style="padding: 25px; border-radius: 24px; position: relative; overflow: hidden; background: linear-gradient(135deg, rgba(15, 98, 254, 0.15) 0%, rgba(56, 189, 248, 0.05) 100%); border: 1px solid rgba(15, 98, 254, 0.25);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 30px;">
+            <div style="font-weight: 800; font-size: 16px; color: var(--primary); letter-spacing: 1px;"><i class="fas fa-microchip"></i> SMART SURAT PASS</div>
+            <div style="font-size: 12px; font-weight: 600; background: var(--primary); color: white; padding: 4px 10px; border-radius: 20px;">ACTIVE</div>
+          </div>
+          
+          <div style="height: 25px;"></div>
+          
+          <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+            <div>
+              <span id="pass-user-name" style="font-size: 14px; font-weight: 700; color: var(--text-main); display: block;">Ramesh Patel</span>
+              <span id="pass-user-phone" style="font-size: 11px; color: var(--text-muted);">+91 98765 43210</span>
+            </div>
+            <div style="text-align: right;">
+              <span style="font-size: 9px; color: var(--text-muted); display: block;">EXPIRY DATE</span>
+              <span style="font-size: 12px; font-weight: 600; color: var(--text-main);">12 / 2030</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dashboard Quick Tools -->
+        <div class="glass-panel" style="padding: 25px; border-radius: 24px; display: flex; flex-direction: column; justify-content: space-between; background: var(--glass-bg); border: 1px solid var(--glass-border);">
+          <div>
+            <h4 style="font-weight: 700; margin-bottom: 12px; color: var(--primary);"><i class="fas fa-bolt"></i> Quick Actions</h4>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">Instantly access your daily commuting utilities.</p>
+          </div>
+          
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+            <a href="#ticket" class="btn btn-primary" style="justify-content: center; font-size: 13px; border-radius: 20px;"><i class="fas fa-ticket-alt"></i> Book Ticket</a>
+            <a href="#tracking" class="btn btn-secondary" style="justify-content: center; font-size: 13px; border-radius: 20px;"><i class="fas fa-map-location-dot"></i> Live Map</a>
+            <a href="#routes" class="btn btn-outline" style="justify-content: center; font-size: 13px; border-radius: 20px;"><i class="fas fa-route"></i> Route Finder</a>
+            <a href="#nearby" class="btn btn-outline" style="justify-content: center; font-size: 13px; border-radius: 20px;"><i class="fas fa-street-view"></i> Nearest Stop</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Tickets Section -->
+      <div class="glass-panel" style="padding: 25px; border-radius: 24px; background: var(--glass-bg); border: 1px solid var(--glass-border);">
+        <h4 style="font-weight: 700; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+          <span><i class="fas fa-history"></i> Recent Booking History</span>
+          <span style="font-size: 12px; font-weight: 600; color: var(--primary); cursor: pointer;">View All</span>
+        </h4>
+        
+        <div id="passenger-bookings-list" style="display: flex; flex-direction: column; gap: 10px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border-radius: 12px; background: rgba(0,0,0,0.02); border: 1px solid var(--border-color);">
+            <div>
+              <strong style="font-size: 13px; display: block;">Route 106 - Station to Abhwa Gaam</strong>
+              <span style="font-size: 11px; color: var(--text-muted);">TXN94819482 • General • 1 Passenger</span>
+            </div>
+            <div style="text-align: right;">
+              <strong style="font-size: 14px; color: var(--text-main);">₹22</strong>
+              <span style="font-size: 11px; color: var(--status-active); display: block; font-weight: 600;">SUCCESS</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Centered Logout Option -->
+      <div style="display: flex; justify-content: center; margin-top: 30px; margin-bottom: 10px;">
+        <button class="btn-logout" style="padding: 10px 30px; font-size: 13.5px; border-radius: 25px;" onclick="logoutUser()">
+          <i class="fas fa-sign-out-alt"></i> Log Out
+        </button>
+      </div>
+    </section>
+
+    <!-- SECTION: ROUTE FINDER -->
+    <section id="routes" class="page-section">
+      <div class="section-header">
+        <h2 data-i18n="routes">Route Finder</h2>
+        <p>Search routes by bus number, source station, or stops.</p>
+      </div>
+
+      <div class="search-box-container">
+        <div class="form-grid">
+          <div class="form-group" style="grid-column: span 2;">
+            <label data-i18n="search">Search Route</label>
+            <div class="input-with-icon">
+              <i class="fas fa-magnifying-glass"></i>
+              <input type="text" id="route-query" class="form-control" data-i18n="search" placeholder="Enter Route No (e.g. 101D, 102A) or Stop Name..." onkeyup="handleSearchKeyPress(event)">
+              <button class="voice-search-btn" id="voice-btn-route-query" data-i18n="voice_search_tooltip" title="Search by Voice">
+                <i class="fas fa-microphone"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Searches Row -->
+        <div style="margin-bottom: 20px; display:flex; align-items:center; gap: 10px; flex-wrap: wrap;">
+          <span style="font-size:12px; font-weight:600; color:var(--text-muted);">Recent Searches:</span>
+          <div id="recent-searches-box" style="display:flex; gap: 6px;"></div>
+        </div>
+
+        <div class="filter-bar">
+          <span class="filter-chip" id="filter-ac" onclick="toggleFilterChip(this)"><i class="fas fa-snowflake"></i> <span data-i18n="ac_bus">AC Bus</span></span>
+          <span class="filter-chip" id="filter-express" onclick="toggleFilterChip(this)"><i class="fas fa-bolt"></i> <span data-i18n="express">Express</span></span>
+          <span class="filter-chip" id="filter-regular" onclick="toggleFilterChip(this)"><i class="fas fa-bus-simple"></i> <span data-i18n="regular">Regular</span></span>
+          <span class="filter-chip" id="filter-acc" onclick="toggleFilterChip(this)"><i class="fas fa-wheelchair"></i> <span data-i18n="accessible">Accessible</span></span>
+        </div>
+      </div>
+
+      <div class="results-grid" id="routes-results">
+        <!-- Dynamic Route Cards loaded from app.js -->
+      </div>
+    </section>
+
+    <!-- SECTION: LIVE TRACKING -->
+    <section id="tracking" class="page-section">
+      <div class="section-header">
+        <h2 data-i18n="tracking">Live Bus Tracking</h2>
+        <p>View real-time locations and estimated arrivals of Surat BRTS buses.</p>
+      </div>
+
+      <div class="split-layout">
+        <div class="map-control-panel">
+          <div>
+            <label style="font-size:12px; font-weight:700; color:var(--text-muted); display:block; margin-bottom:8px;">OVERLAY ROUTE CORRIDOR</label>
+            <select id="tracking-route-select" class="form-control" style="padding-left:14px;"></select>
+          </div>
+          
+          <div style="border-top:1px solid var(--border-color); padding-top:15px; flex-grow:1; display:flex; flex-direction:column; overflow:hidden;">
+            <label style="font-size:11px; font-weight:700; color:var(--text-muted); display:block; margin-bottom:12px;">ACTIVE BUS SHUTTLES ON MAP</label>
+            <div id="live-bus-list-panel" style="overflow-y:auto; flex-grow:1; padding-right:4px;">
+              <!-- Dynamic Live Bus Items -->
+            </div>
+          </div>
+        </div>
+
+        <div class="map-container-wrapper">
+          <div id="map"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: BUS STATIONS -->
+    <section id="stations" class="page-section">
+      <div class="section-header">
+        <h2 data-i18n="stations">Bus Stations</h2>
+        <p>Explore facilities, accessibility features, and landmarks near major BRTS stations.</p>
+      </div>
+
+      <div class="search-box-container" style="max-width: 600px; margin: 0 auto 40px auto; padding: 20px;">
+        <div class="form-group">
+          <div class="input-with-icon">
+            <i class="fas fa-warehouse"></i>
+            <input type="text" id="station-query" class="form-control" placeholder="Search station by name or address..." onkeyup="renderStations()">
+          </div>
+        </div>
+      </div>
+
+      <div class="station-list" id="stations-grid-list">
+        <!-- Dynamic Stations Cards -->
+      </div>
+    </section>
+
+    <!-- SECTION: TIMETABLE -->
+    <section id="timetable" class="page-section">
+      <div class="section-header">
+        <h2 data-i18n="timetable">Bus Timetable</h2>
+        <p>Check operational frequencies, first & last bus times, and holiday calendars.</p>
+      </div>
+
+      <div class="search-box-container" style="max-width: 600px; margin: 0 auto 40px auto; padding: 25px;">
+        <div class="form-group" style="margin-bottom:15px;">
+          <label>SELECT CORRIDOR ROUTE</label>
+          <select id="timetable-route-select" class="form-control" style="padding-left:14px;"></select>
+        </div>
+        <button class="btn btn-primary" style="width:100%; justify-content:center;" onclick="downloadTimetablePDF()">
+          <i class="fas fa-file-pdf"></i> Download Schedule PDF
+        </button>
+      </div>
+
+      <div class="admin-content-card" style="max-width: 800px; margin: 0 auto;">
+        <div class="admin-table-container">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Day Category</th>
+                <th>First Bus</th>
+                <th>Last Bus</th>
+                <th>Frequency</th>
+                <th>Remarks</th>
+              </tr>
+            </thead>
+            <tbody id="timetable-grid-body">
+              <tr>
+                <td colspan="5" style="text-align:center; color:var(--text-muted);">Please select a route to view its operational timetable.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: SMART TICKET -->
+    <section id="ticket" class="page-section">
+      <div class="section-header">
+        <h2 data-i18n="ticket">Smart Ticket Booking</h2>
+        <p>Generate digital transit passes instantly using cashless QR Codes.</p>
+      </div>
+
+      <div class="ticket-split">
+        <!-- Form Panel -->
+        <div class="search-box-container" style="margin-bottom:0;">
+          <form onsubmit="generateSmartTicket(event)">
+            <div class="form-grid">
+              <div class="form-group">
+                <label data-i18n="from">Source Station</label>
+                <select id="ticket-from" class="form-control" style="padding-left:14px;" required></select>
+              </div>
+              <div class="form-group">
+                <label data-i18n="to">Destination Station</label>
+                <select id="ticket-to" class="form-control" style="padding-left:14px;" required></select>
+              </div>
+            </div>
+
+            <div class="form-grid">
+              <div class="form-group">
+                <label data-i18n="passenger_type">Passenger Type</label>
+                <select id="ticket-passenger-type" class="form-control" style="padding-left:14px;">
+                  <option value="general" data-i18n="general">General (Standard)</option>
+                  <option value="student" data-i18n="student">Student (50% Off)</option>
+                  <option value="senior" data-i18n="senior">Senior Citizen (30% Off)</option>
+                  <option value="child" data-i18n="child">Child (Free)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label data-i18n="passengers">Number of Passengers</label>
+                <input type="number" id="ticket-qty" class="form-control" min="1" max="6" value="1" style="padding-left:14px;" required>
+              </div>
+            </div>
+
+            <div class="form-grid">
+              <div class="form-group">
+                <label data-i18n="date">Journey Date</label>
+                <input type="date" id="ticket-date" class="form-control" style="padding-left:14px;" required>
+              </div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; border-top:1px solid var(--border-color); padding-top:20px;">
+              <div id="live-fare-display" style="font-size:15px;">Calculated Fare: <strong>₹0</strong></div>
+              <button class="btn btn-primary" type="submit"><i class="fas fa-qrcode"></i> <span data-i18n="generate_ticket">Book Ticket</span></button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Receipt Output Display -->
+        <div id="ticket-receipt-section" style="display:none;">
+          <div class="ticket-receipt-card" id="ticket-receipt-card">
+            <div class="ticket-header">
+              <div class="ticket-header-logo">
+                <i class="fas fa-bus"></i> SURAT <span>BRTS</span>
+              </div>
+              <p style="font-size:11px; color:#64748b; margin-top:4px;">Smart City Transit Ticket</p>
+            </div>
+            
+            <div class="ticket-row">
+              <span>From:</span>
+              <strong id="rec-from">-</strong>
+            </div>
+            <div class="ticket-row">
+              <span>To:</span>
+              <strong id="rec-to">-</strong>
+            </div>
+            <div class="ticket-row">
+              <span>Qty / Type:</span>
+              <strong id="rec-qty">-</strong>
+            </div>
+            <div class="ticket-row">
+              <span>Category:</span>
+              <strong id="rec-type">-</strong>
+            </div>
+            <div class="ticket-row">
+              <span>Date:</span>
+              <strong id="rec-date">-</strong>
+            </div>
+            <div class="ticket-row">
+              <span>Seat No:</span>
+              <strong id="rec-seat">-</strong>
+            </div>
+            <div class="ticket-row">
+              <span>Ticket ID:</span>
+              <strong id="rec-no">-</strong>
+            </div>
+            <div class="ticket-row total">
+              <span>Total Fare:</span>
+              <strong id="rec-total">₹0</strong>
+            </div>
+
+            <div class="ticket-qr-container">
+              <div id="qrcode"></div>
+              <p class="ticket-no">SCAN QR AT ENTRY GATE</p>
+            </div>
+          </div>
+          
+          <div style="margin-top:20px; display:flex; gap:12px;">
+            <button class="btn btn-glass" style="flex:1; justify-content:center;" onclick="printTicketReceipt()"><i class="fas fa-print"></i> Print</button>
+            <button class="btn btn-primary" style="flex:1; justify-content:center;" onclick="alert('Ticket downloaded as Pass locally.')"><i class="fas fa-download"></i> Download</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+
+    <!-- SECTION: AI JOURNEY PLANNER -->
+    <section id="journey_planner" class="page-section">
+      <div class="section-header">
+        <h2 data-i18n="journey_planner">AI Journey Planner</h2>
+        <p>Input stations to let the AI forecast crowd index and estimated road delays.</p>
+      </div>
+
+      <div class="search-box-container" style="max-width: 600px; margin: 0 auto;">
+        <div class="form-grid">
+          <div class="form-group">
+            <label data-i18n="from">Origin Point</label>
+            <select id="journey-from" class="form-control" style="padding-left:14px;"></select>
+          </div>
+          <div class="form-group">
+            <label data-i18n="to">Target Destination</label>
+            <select id="journey-to" class="form-control" style="padding-left:14px;"></select>
+          </div>
+        </div>
+        <button class="btn btn-primary" style="width:100%; margin-top:20px; justify-content:center;" onclick="calculateJourney()">
+          <i class="fas fa-brain"></i> Generate Smart Journey
+        </button>
+
+        <div id="journey-results" style="display:none; margin-top:20px; border-top:1px dashed var(--border-color); padding-top:20px;">
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: NEARBY STATIONS -->
+    <section id="nearby" class="page-section">
+      <div class="section-header">
+        <h2 data-i18n="nearby">Nearby Stations Locator</h2>
+        <p>Find BRTS platforms closest to your walking range in Surat.</p>
+      </div>
+
+      <div class="search-box-container" style="max-width: 600px; margin: 0 auto;">
+        <div id="nearby-stations-list">
+          <!-- Dynamically computed based on distance from city center -->
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: ALERTS -->
+    <section id="alerts" class="page-section">
+      <div class="section-header">
+        <h2 data-i18n="alerts">Real-Time Alerts & Updates</h2>
+        <p>Live feeds regarding route diversions, congestion, drainage works, and weather emergencies.</p>
+      </div>
+
+      <div class="alerts-list" id="alerts-container" style="max-width:800px; margin: 0 auto;">
+        <!-- Dynamic Alert Cards -->
+      </div>
+    </section>
+
+    <!-- SECTION: FEEDBACK -->
+    <section id="feedback" class="page-section">
+      <div class="section-header">
+        <h2 data-i18n="feedback">Passenger Feedback Desk</h2>
+        <p>Rate your transit experience, report bus delays, and log complaints directly.</p>
+      </div>
+
+      <div class="feedback-grid">
+        <div class="search-box-container">
+          <form onsubmit="submitFeedbackForm(event)">
+            <div class="form-group" style="margin-bottom:15px;">
+              <label>FEEDBACK CATEGORY</label>
+              <select id="feedback-type" class="form-control" style="padding-left:14px;">
+                <option value="delay">Bus Delay / Timing Issue</option>
+                <option value="cleanliness">Station / Bus Cleanliness</option>
+                <option value="driver">Driver / Staff Behavior</option>
+                <option value="improvement">Suggestions for Improvement</option>
+              </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom:15px;">
+              <label>RATE TRANSIT COMFORT</label>
+              <div class="rating-row">
+                <button type="button" class="rating-star-btn active" onclick="setFeedbackRating(1)"><i class="fas fa-star"></i></button>
+                <button type="button" class="rating-star-btn active" onclick="setFeedbackRating(2)"><i class="fas fa-star"></i></button>
+                <button type="button" class="rating-star-btn active" onclick="setFeedbackRating(3)"><i class="fas fa-star"></i></button>
+                <button type="button" class="rating-star-btn active" onclick="setFeedbackRating(4)"><i class="fas fa-star"></i></button>
+                <button type="button" class="rating-star-btn active" onclick="setFeedbackRating(5)"><i class="fas fa-star"></i></button>
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom:15px;">
+              <label>DETAILED DESCRIPTION</label>
+              <textarea id="feedback-desc" class="form-control" placeholder="Write description or log issue here..." style="padding-left:14px; height:90px; border-radius:12px;" required></textarea>
+            </div>
+
+            <div class="form-group" style="margin-bottom:20px;">
+              <label data-i18n="upload_img">Attach Photograph (Optional)</label>
+              <input type="file" id="feedback-file" class="form-control" style="padding:10px 14px;" accept="image/*">
+            </div>
+
+            <button class="btn btn-primary" type="submit" style="width:100%; justify-content:center;"><i class="fas fa-paper-plane"></i> Submit Feedback</button>
+          </form>
+        </div>
+
+        <div class="admin-content-card">
+          <h3 style="font-weight:700; margin-bottom:15px;"><i class="fas fa-history"></i> Complaint Tracking Status</h3>
+          <div class="feedback-status-list" id="complaints-history-list">
+            <!-- Loaded dynamically from app.js -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: ABOUT -->
+    <section id="about" class="page-section">
+      <div class="section-header">
+        <h2 data-i18n="about">About Surat BRTS</h2>
+        <p>Surat's leading eco-friendly bus rapid transit initiative.</p>
+      </div>
+
+      <div class="quick-tools-grid" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); margin-bottom: 30px;">
+        <div class="tool-card" style="cursor:default;">
+          <div class="tool-icon"><i class="fas fa-bullseye" style="color:var(--primary);"></i></div>
+          <div class="tool-info">
+            <h3 style="font-weight:700;">Our Mission</h3>
+            <p>To deliver rapid, safe, carbon-conscious, and technologically modern public mobility across the diamond city of Surat.</p>
+          </div>
+        </div>
+        <div class="tool-card" style="cursor:default;">
+          <div class="tool-icon"><i class="fas fa-eye" style="color:var(--secondary);"></i></div>
+          <div class="tool-info">
+            <h3 style="font-weight:700;">Vision & Expansion</h3>
+            <p>Developing an integrated transport network linking BRTS Corridors, Metro routes, and electric City buses for smart city development.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-content-card" style="margin-bottom: 40px;">
+        <h3 style="font-weight:700; margin-bottom:10px;"><i class="fas fa-leaf" style="color:var(--secondary);"></i> Environmental Sustainability Impact</h3>
+        <p style="font-size:14px; line-height:1.6; color:var(--text-muted);">
+          Surat BRTS operates over 80+ zero-emission electric buses. Our corridors save approximately <strong>500+ Metric Tons</strong> of CO2 emissions monthly by diverting passengers from private vehicles to public transit. Our goal is 100% electrification of the transit fleet by 2028.
+        </p>
+      </div>
+
+      <div class="section-header">
+        <h2 data-i18n="faq_sec">Frequently Asked Questions</h2>
+      </div>
+      <div class="accordion" id="faq-accordion" style="max-width:800px; margin: 0 auto;">
+        <!-- Dynamic Accordion Items -->
+      </div>
+    </section>
+
+    <!-- SECTION: CONTACT -->
+    <section id="contact" class="page-section">
+      <div class="section-header">
+        <h2 data-i18n="contact">Contact Support</h2>
+        <p>Reach out to the BRTS control room, SMC authorities, or emergency helpline.</p>
+      </div>
+
+      <div class="feedback-grid">
+        <div class="search-box-container">
+          <h3 style="font-weight:700; margin-bottom:15px;">Send a Message</h3>
+          <form onsubmit="event.preventDefault(); alert('Message sent successfully! Our team will respond shortly.'); this.reset();">
+            <div class="form-group" style="margin-bottom:12px;">
+              <label>FULL NAME</label>
+              <input type="text" class="form-control" placeholder="Enter your name" style="padding-left:14px;" required>
+            </div>
+            <div class="form-group" style="margin-bottom:12px;">
+              <label>EMAIL ADDRESS</label>
+              <input type="email" class="form-control" placeholder="Enter email" style="padding-left:14px;" required>
+            </div>
+            <div class="form-group" style="margin-bottom:15px;">
+              <label>MESSAGE</label>
+              <textarea class="form-control" placeholder="Write message details..." style="padding-left:14px; height:80px; border-radius:12px;" required></textarea>
+            </div>
+            <button class="btn btn-primary" type="submit" style="width:100%; justify-content:center;">Send Message</button>
+          </form>
+        </div>
+
+        <div class="admin-content-card">
+          <h3 style="font-weight:700; margin-bottom:15px;" data-i18n="emergency_nos">Emergency & Helpline</h3>
+          <div class="feedback-status-list">
+            <div class="feedback-status-item">
+              <div>
+                <h5 data-i18n="brts_helpline">BRTS Customer Care</h5>
+                <p>General schedules, tickets and routing enquiries</p>
+              </div>
+              <strong style="color:var(--primary); font-size:14px;">1800-233-0263</strong>
+            </div>
+            <div class="feedback-status-item">
+              <div>
+                <h5 data-i18n="police">Police Control Room</h5>
+                <p>Safety, security, lost & found at stations</p>
+              </div>
+              <strong style="color:var(--status-delay); font-size:14px;">100 / 112</strong>
+            </div>
+            <div class="feedback-status-item">
+              <div>
+                <h5 data-i18n="ambulance">Ambulance Services</h5>
+                <p>Medical emergencies on board or at terminals</p>
+              </div>
+              <strong style="color:var(--status-active); font-size:14px;">108</strong>
+            </div>
+          </div>
+
+          <div style="margin-top:20px; border-top: 1px solid var(--border-color); padding-top:20px; font-size:13px; color:var(--text-muted);">
+            <strong style="color:var(--text-main); display:block; margin-bottom:4px;">Headquarters Address:</strong>
+            Surat Municipal Corporation BRTS Cell, Muglisara, Near Tapi Bridge, Surat, Gujarat - 395003.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: ADMIN DASHBOARD (DEMO) -->
+    <section id="admin" class="page-section">
+      <div class="section-header">
+        <h2 data-i18n="dashboard">Admin Operations Dashboard</h2>
+        <p>Operational controls, route editors, and live passenger metrics analytics.</p>
+      </div>
+
+      <div class="admin-grid">
+        <!-- Sidebar Navigation -->
+        <div class="admin-sidebar">
+          <div class="admin-nav-item active" onclick="switchAdminSubTab('analytics')">
+            <i class="fas fa-chart-pie"></i> <span data-i18n="admin_analytics">Analytics</span>
+          </div>
+          <div class="admin-nav-item" onclick="switchAdminSubTab('buses')">
+            <i class="fas fa-bus"></i> <span data-i18n="routes">Buses & Routes</span>
+          </div>
+          <div class="admin-nav-item" onclick="switchAdminSubTab('alerts')">
+            <i class="fas fa-bullhorn"></i> <span data-i18n="publish_alert">Publish Alert</span>
+          </div>
+          <div class="admin-nav-item" onclick="switchAdminSubTab('feedback')">
+            <i class="fas fa-comments"></i> <span data-i18n="view_feedback">Feedback Log</span>
+          </div>
+        </div>
+
+        <!-- Main Admin Display Panel -->
+        <div class="admin-content-card" id="admin-content-panel">
+          <!-- Loaded dynamically via app.js depending on sub tab selection -->
+        </div>
+      </div>
+
+      <!-- Bottom Centered Logout Option -->
+      <div style="display: flex; justify-content: center; margin-top: 30px; margin-bottom: 10px;">
+        <button class="btn-logout" style="padding: 10px 30px; font-size: 13.5px; border-radius: 25px;" onclick="logoutUser()">
+          <i class="fas fa-sign-out-alt"></i> Log Out
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FLOATING ACTIONS & WIDGETS -->
+  <div class="floating-actions-left">
+    <button id="sos-btn" class="sos-btn" title="SOS Emergency Trigger">SOS</button>
+    <button id="accessibility-toggle" class="accessibility-toggle-btn" title="Toggle Accessibility Font Size"><i class="fas fa-font"></i></button>
+    <button id="back-to-top" class="back-to-top-btn" title="Back to Top" style="display:none;"><i class="fas fa-arrow-up"></i></button>
+  </div>
+
+  <!-- AI Chat Assistant Collapsible Widget -->
+  <div id="chatbot-container">
+    <div id="chatbot-window">
+      <div class="chatbot-header">
+        <div class="chatbot-header-info">
+          <i class="fas fa-robot"></i>
+          <div>
+            <h4 data-i18n="ai_chat">AI Journey assistant</h4>
+            <span>Online | SMC Agent</span>
+          </div>
+        </div>
+        <button class="chatbot-close-btn" id="chatbot-close-btn"><i class="fas fa-xmark"></i></button>
+      </div>
+      <div class="chatbot-messages" id="chatbot-messages">
+        <div class="chat-msg bot">Hello! Welcome to Smart Surat BRTS AI Assistant. How can I assist you with your journey today?</div>
+      </div>
+      <div class="chatbot-input-area">
+        <input type="text" class="chatbot-input" id="chatbot-input" placeholder="Type a message or click mic...">
+        <button class="chatbot-voice-btn" id="voice-btn-chatbot-input" title="Speech to Text">
+          <i class="fas fa-microphone"></i>
+        </button>
+        <button class="chatbot-send-btn" id="chatbot-send-btn"><i class="fas fa-paper-plane"></i></button>
+      </div>
+    </div>
+    <button id="chatbot-toggle-btn">
+      <i class="fas fa-comments"></i>
+    </button>
+  </div>
+
+  <!-- Footer Section -->
+  <footer>
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <h4 data-i18n="title">TransitOne Surat</h4>
+        <p data-i18n="subtitle">Fast, Smart, Safe and Sustainable Public Transportation for Surat City</p>
+        <div class="footer-socials">
+          <a href="#" class="social-icon-btn"><i class="fab fa-facebook-f"></i></a>
+          <a href="#" class="social-icon-btn"><i class="fab fa-twitter"></i></a>
+          <a href="#" class="social-icon-btn"><i class="fab fa-instagram"></i></a>
+          <a href="#" class="social-icon-btn"><i class="fab fa-linkedin-in"></i></a>
+        </div>
+      </div>
+      
+      <div class="footer-links">
+        <h5 data-i18n="routes">Quick Nav</h5>
+        <ul>
+          <li><a href="#home">Home</a></li>
+          <li><a href="#routes">Route Finder</a></li>
+          <li><a href="#tracking">Live Tracking</a></li>
+          <li><a href="#stations">Stations List</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-links">
+        <h5 data-i18n="emergency_nos">SMC Services</h5>
+        <ul>
+          <li><a href="https://www.suratmunicipal.gov.in" target="_blank">SMC Portal</a></li>
+          <li><a href="#admin">Admin Dashboard</a></li>
+          <li><a href="#feedback">Submit Complaint</a></li>
+          <li><a href="#about">About BRTS</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-newsletter">
+        <h5>Newsletter Subscription</h5>
+        <p>Subscribe to receive system alerts, scheduling changes, and updates.</p>
+        <form class="newsletter-form" onsubmit="event.preventDefault(); alert('Subscribed successfully!'); this.reset();">
+          <input type="email" placeholder="Enter email" required>
+          <button type="submit">Join</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <p data-i18n="copyright">© 2026 TransitOne Surat. Surat Municipal Corporation.</p>
+      <div class="footer-bottom-links">
+        <a href="#about">Privacy Policy</a>
+        <a href="#about">Terms & Conditions</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Authentication Modal (Sign In / Register) -->
+  <div id="auth-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-card" style="max-width: 500px; padding: 25px;">
+      <div class="modal-header">
+        <h3 id="auth-modal-title"><i class="fas fa-user-shield"></i> Portal Authentication</h3>
+        <button class="modal-close-btn" onclick="closeAuthModal()"><i class="fas fa-xmark"></i></button>
+      </div>
+      <div class="modal-body" style="position: relative;">
+        <!-- Screen 1: Role Selection -->
+        <div id="auth-screen-role">
+          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px; text-align: center;">Choose your portal access role to proceed:</p>
+          <div style="display: flex; flex-direction: column; gap: 15px;">
+            <div class="role-select-card" onclick="selectAuthRole('passenger')">
+              <div class="role-icon-box">🚌</div>
+              <div class="role-info-box">
+                <h4>Passenger (Commuter)</h4>
+                <p>Book quick tickets, track live buses, and manage transit passes.</p>
+              </div>
+            </div>
+            <div class="role-select-card" onclick="selectAuthRole('admin')">
+              <div class="role-icon-box">⚙️</div>
+              <div class="role-info-box">
+                <h4>City Admin (Operator)</h4>
+                <p>Manage transit fleet, routes, emergency alerts, and dashboard operations.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Screen 2: Methods selection & forms -->
+        <div id="auth-screen-methods" style="display:none;">
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom:10px;">
+            <button class="btn btn-outline" style="padding: 4px 8px; font-size: 11px; border-radius: 12px;" onclick="goBackToRoles()"><i class="fas fa-arrow-left"></i> Role Selector</button>
+            <span id="auth-selected-role-badge" style="font-size: 11px; font-weight: 700; background: rgba(15,98,254,0.15); color: var(--primary); padding: 4px 10px; border-radius: 12px; text-transform: uppercase;">Passenger</span>
+          </div>
+
+          <!-- Tabs for Auth Methods -->
+          <div class="auth-tabs" style="display: flex; gap: 5px; margin-bottom: 20px; background: rgba(0,0,0,0.03); padding: 4px; border-radius: 12px;">
+            <button id="tab-btn-otp" class="auth-tab-btn active" onclick="setAuthMethod('otp')">📱 OTP/SMS</button>
+            <button id="tab-btn-email" class="auth-tab-btn" onclick="setAuthMethod('email')">📧 Email</button>
+            <button id="tab-btn-social" class="auth-tab-btn" onclick="setAuthMethod('social')">🌐 Social</button>
+          </div>
+
+          <!-- ADMIN PROTECTION ACCESS CODE INPUT (Shown for Admins across all methods) -->
+          <div id="admin-access-code-box" class="form-group" style="display:none; margin-bottom:15px; background:rgba(239,68,68,0.06); padding:12px; border:1px solid rgba(239,68,68,0.15); border-radius:12px;">
+            <label style="color:var(--status-delay); font-weight:700;"><i class="fas fa-lock"></i> ADMIN ACCESS PROTECTION CODE</label>
+            <div class="input-with-icon">
+              <i class="fas fa-key" style="color:var(--status-delay);"></i>
+              <input type="password" id="auth-admin-code" class="form-control" placeholder="Enter Admin Access Code for registration" style="padding-left:40px; border-color:rgba(239,68,68,0.25);">
+            </div>
+            <span style="font-size:9.5px; color:var(--text-muted); margin-top:4px; display:block;">Required for Admin registration verification (Demo code: ADMIN2026).</span>
+          </div>
+
+          <!-- METHOD 1: OTP / SMS FLOW -->
+          <div id="method-flow-otp" class="method-flow">
+            <!-- Step 1: Send OTP -->
+            <div id="otp-step-send">
+              <form onsubmit="sendOTPVerification(event)">
+                <div class="form-group" style="margin-bottom:15px;">
+                  <label>FULL NAME</label>
+                  <div class="input-with-icon">
+                    <i class="fas fa-user"></i>
+                    <input type="text" id="otp-reg-name" class="form-control" placeholder="Enter your full name" style="padding-left:40px;">
+                  </div>
+                </div>
+                <div class="form-group" style="margin-bottom:20px;">
+                  <label>MOBILE NUMBER</label>
+                  <div style="display:flex; gap:8px;">
+                    <span style="display:flex; align-items:center; background:rgba(0,0,0,0.05); padding:0 15px; border-radius:25px; border:1px solid var(--border-color); font-size:14px; font-weight:600;">+91</span>
+                    <div class="input-with-icon" style="flex-grow:1;">
+                      <i class="fas fa-phone"></i>
+                      <input type="tel" id="otp-reg-phone" class="form-control" placeholder="Enter 10-digit number" pattern="[0-9]{10}" style="padding-left:40px;" required>
+                    </div>
+                  </div>
+                </div>
+                <button class="btn btn-primary" type="submit" style="width:100%; justify-content:center;">Send 6-Digit OTP</button>
+              </form>
+            </div>
+
+            <!-- Step 2: Verify 6-Digit OTP -->
+            <div id="otp-step-verify" style="display:none;">
+              <p style="font-size:12px; color:var(--text-muted); margin-bottom:15px; text-align:center;">Enter the 6-digit code sent to your mobile:</p>
+              <!-- OTP shown directly on screen (inline), not in a popup -->
+              <div id="otp-inline-display" class="otp-inline-display" style="display:none;">
+                <div class="otp-inline-label"><i class="fas fa-sms"></i> Your OTP code (demo)</div>
+                <div class="otp-inline-code" id="otp-inline-code">------</div>
+                <button type="button" class="otp-inline-fill" onclick="autofillOTP()"><i class="fas fa-wand-magic-sparkles"></i> Tap to auto-fill</button>
+              </div>
+              <form onsubmit="verifyOTPVerification(event)">
+                <div style="display:flex; justify-content:space-between; gap:6px; margin-bottom:20px;">
+                  <input type="text" class="otp-digit-box" maxlength="1" oninput="focusNextDigit(this, 0)" onkeydown="handleDigitBackspace(event, 0)" required>
+                  <input type="text" class="otp-digit-box" maxlength="1" oninput="focusNextDigit(this, 1)" onkeydown="handleDigitBackspace(event, 1)" required>
+                  <input type="text" class="otp-digit-box" maxlength="1" oninput="focusNextDigit(this, 2)" onkeydown="handleDigitBackspace(event, 2)" required>
+                  <input type="text" class="otp-digit-box" maxlength="1" oninput="focusNextDigit(this, 3)" onkeydown="handleDigitBackspace(event, 3)" required>
+                  <input type="text" class="otp-digit-box" maxlength="1" oninput="focusNextDigit(this, 4)" onkeydown="handleDigitBackspace(event, 4)" required>
+                  <input type="text" class="otp-digit-box" maxlength="1" oninput="focusNextDigit(this, 5)" onkeydown="handleDigitBackspace(event, 5)" required>
+                </div>
+                <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:20px;">
+                  <span id="otp-countdown-text" style="color:var(--text-muted);">Resend code in <strong id="otp-countdown-val">30</strong>s</span>
+                  <a href="#" id="otp-resend-trigger" style="display:none; color:var(--primary); font-weight:700; text-decoration:none;" onclick="resendAuthOTP(event)">Resend Code</a>
+                </div>
+                <button id="otp-verify-submit-btn" class="btn btn-primary" type="submit" style="width:100%; justify-content:center;" disabled>Verify & Access Portal</button>
+              </form>
+            </div>
+          </div>
+
+          <!-- METHOD 2: EMAIL + PASSWORD FLOW -->
+          <div id="method-flow-email" class="method-flow" style="display:none;">
+            <form onsubmit="submitEmailAuth(event)">
+              <div id="email-signup-only-fields">
+                <div class="form-group" style="margin-bottom:12px;">
+                  <label>FULL NAME</label>
+                  <div class="input-with-icon">
+                    <i class="fas fa-user"></i>
+                    <input type="text" id="email-auth-name" class="form-control" placeholder="Enter full name" style="padding-left:40px;">
+                  </div>
+                </div>
+              </div>
+              <div class="form-group" style="margin-bottom:12px;">
+                <label>EMAIL ADDRESS</label>
+                <div class="input-with-icon">
+                  <i class="fas fa-envelope"></i>
+                  <input type="email" id="email-auth-id" class="form-control" placeholder="Enter email address" style="padding-left:40px;" required>
+                </div>
+              </div>
+              <div class="form-group" style="margin-bottom:15px;">
+                <label>PASSWORD</label>
+                <div class="input-with-icon">
+                  <i class="fas fa-lock"></i>
+                  <input type="password" id="email-auth-password" class="form-control" placeholder="Enter password (min 6 chars)" minlength="6" style="padding-left:40px;" required>
+                </div>
+              </div>
+              <button id="email-submit-btn" class="btn btn-primary" type="submit" style="width:100%; justify-content:center; margin-bottom:15px;">Sign In</button>
+              
+              <div style="text-align:center; font-size:12px;">
+                <span id="email-toggle-desc" style="color:var(--text-muted);">Already have an account?</span>
+                <a href="#" id="email-toggle-link" style="color:var(--primary); font-weight:700; text-decoration:none;" onclick="toggleEmailMode(event)">Sign In</a>
+              </div>
+            </form>
+          </div>
+
+          <!-- METHOD 3: SOCIAL SIGN IN (GOOGLE & APPLE) -->
+          <div id="method-flow-social" class="method-flow" style="display:none;">
+            <div style="display:flex; flex-direction:column; gap:12px;">
+              <!-- Google Button -->
+              <button class="social-login-btn google-btn" onclick="startSocialLogin('Google')">
+                <i class="fab fa-google"></i> Continue with Google
+              </button>
+              <!-- Apple Button -->
+              <button class="social-login-btn apple-btn" onclick="startSocialLogin('Apple')">
+                <i class="fab fa-apple"></i> Sign in with Apple
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Social Connection Loader Backdrop (Shown during social auth) -->
+        <div id="social-auth-loader" style="display:none; position:absolute; top:0; left:0; width:100%; height:100%; background:var(--glass-bg); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); border-radius:12px; flex-direction:column; justify-content:center; align-items:center; gap:15px; z-index: 10;">
+          <div class="spinner" style="width:40px; height:40px; border:3px solid var(--border-color); border-top-color:var(--primary); border-radius:50%; animation:spin 1s linear infinite;"></div>
+          <p id="social-loader-text" style="font-size:13px; font-weight:600; color:var(--text-main);">Connecting to provider...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container (SMS Gateway Simulation) -->
+  <div id="sms-toast-container" class="sms-toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="data.js"></script>
+  <!-- Leaflet Map JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <!-- ChartJS CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="app.js"></script>
+
+</body>
+</html>
